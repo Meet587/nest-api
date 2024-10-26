@@ -27,9 +27,10 @@ import { diskStorage } from 'multer';
 import { extname } from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import { Request } from 'express';
-import { UserEntity } from './entities/user.entity';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { GetUserByEmailDto } from './dto/get-user-by-email.dto';
+import { JwtPayloadType } from './dto/jwt-payload.type';
+import { UploadProfileResDto } from './dto/upload-profile-res.dto';
 
 const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2 MB
 const ALLOWED_FILE_TYPES = ['.jpg', '.jpeg', '.png'];
@@ -60,8 +61,8 @@ export class UserController {
   })
   @ApiResponse({ status: 200, description: 'Return the found user.' })
   @ApiResponse({ status: 404, description: 'User not found.' })
-  findOne(@Body() email: string) {
-    return this.userService.findOneByEmail(email);
+  findOne(@Body() body: GetUserByEmailDto) {
+    return this.userService.findOneByEmail(body.email);
   }
 
   @Post(':userId/upload-profile-picture')
@@ -83,6 +84,7 @@ export class UserController {
   @ApiResponse({
     status: 201,
     description: 'The profile picture has been successfully uploaded.',
+    type: UploadProfileResDto,
   })
   @ApiResponse({ status: 400, description: 'Bad Request.' })
   @UseInterceptors(
@@ -113,7 +115,6 @@ export class UserController {
     @Param('userId') userId: number,
     @UploadedFile() file: Express.Multer.File,
   ) {
-    console.log(process.env.JWL_SECRET);
     return this.userService.uploadProfilePicture(userId, file);
   }
 
@@ -130,8 +131,8 @@ export class UserController {
     };
   }
 
-  @UseGuards(JwtAuthGuard)
   @Put(':userId/update-profile-picture')
+  // @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Update a user's profile picture" })
   @ApiParam({ name: 'userId', type: 'number' })
@@ -181,8 +182,8 @@ export class UserController {
     @UploadedFile() file: Express.Multer.File,
     @Req() req: Request,
   ) {
-    const user = req.user as UserEntity;
-    if (user.id !== userId) {
+    const user = req.user as JwtPayloadType;
+    if (user.uId !== userId) {
       throw new BadRequestException(
         'You can only update your own profile picture',
       );

@@ -34,13 +34,7 @@ export class AuthController {
     description: 'Bad request - Username already exists',
   })
   async register(@Body() createUserDto: CreateUserDto) {
-    const existingUser = await this.userService.findOneByEmail(
-      createUserDto.email,
-    );
-    if (existingUser) {
-      throw new BadRequestException('Username already exists');
-    }
-    return this.userService.create(createUserDto);
+    return await this.authService.register(createUserDto);
   }
 
   @Post('login')
