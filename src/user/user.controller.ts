@@ -29,6 +29,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { Request } from 'express';
 import { UserEntity } from './entities/user.entity';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { GetUserByEmailDto } from './dto/get-user-by-email.dto';
 
 const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2 MB
 const ALLOWED_FILE_TYPES = ['.jpg', '.jpeg', '.png'];
@@ -53,6 +54,10 @@ export class UserController {
   @Get('')
   // @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Find a user by email' })
+  @ApiBody({
+    description: 'find user by email',
+    type: GetUserByEmailDto,
+  })
   @ApiResponse({ status: 200, description: 'Return the found user.' })
   @ApiResponse({ status: 404, description: 'User not found.' })
   findOne(@Body() email: string) {
@@ -121,7 +126,7 @@ export class UserController {
   async getProfilePicture(@Param('userId') userId: number) {
     const filePath = await this.userService.getProfilePicture(userId);
     return {
-      profilePictureUrl: `http://localhost:${process.env.PORT}/${filePath}`,
+      profilePictureUrl: `http://localhost:${process.env.PORT ?? 3003}/${filePath}`,
     };
   }
 
