@@ -42,6 +42,7 @@ export class UserController {
 
   @Post()
   // @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Create a new user' })
   @ApiResponse({
     status: 201,
@@ -54,6 +55,7 @@ export class UserController {
 
   @Get('')
   // @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Find a user by email' })
   @ApiBody({
     description: 'find user by email',
@@ -67,6 +69,7 @@ export class UserController {
 
   @Post(':userId/upload-profile-picture')
   // @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Upload a profile picture' })
   @ApiParam({ name: 'userId', type: 'number' })
   @ApiConsumes('multipart/form-data')
@@ -120,6 +123,7 @@ export class UserController {
 
   @Get(':userId/profile-picture')
   // @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: "Get a user's profile picture URL" })
   @ApiParam({ name: 'userId', type: 'number' })
   @ApiResponse({ status: 200, description: 'Return the profile picture URL.' })
