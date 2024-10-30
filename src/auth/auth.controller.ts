@@ -22,7 +22,6 @@ import {
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
-    private userService: UserService,
   ) {}
 
   @Post('register')
@@ -50,7 +49,6 @@ export class AuthController {
   }
 
   @Post('refresh')
-  // @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Refresh access token' })
   @ApiBody({

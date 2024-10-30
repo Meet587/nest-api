@@ -15,11 +15,11 @@ import { UserEntity } from 'src/user/entities/user.entity';
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.register({
       secret: process.env.JWL_SECRET,
-      signOptions: { expiresIn: '15m' },
+      signOptions: { expiresIn: process.env.JWT_ACCESS_TOKEN_EXP },
     }),
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy],
-  exports: [AuthService],
+  exports: [AuthService, JwtModule, PassportModule],
 })
 export class AuthModule {}

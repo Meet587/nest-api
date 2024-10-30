@@ -31,6 +31,7 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { GetUserByEmailDto } from './dto/get-user-by-email.dto';
 import { JwtPayloadType } from './dto/jwt-payload.type';
 import { UploadProfileResDto } from './dto/upload-profile-res.dto';
+import { AuthGuard } from '@nestjs/passport';
 
 const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2 MB
 const ALLOWED_FILE_TYPES = ['.jpg', '.jpeg', '.png'];
@@ -41,7 +42,7 @@ export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Post()
-  // @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Create a new user' })
   @ApiResponse({
@@ -54,7 +55,7 @@ export class UserController {
   }
 
   @Get('')
-  // @UseGuards(JwtAuthGuard)
+  @UseGuards(AuthGuard('jwt'))
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Find a user by email' })
   @ApiBody({
@@ -68,7 +69,7 @@ export class UserController {
   }
 
   @Post(':userId/upload-profile-picture')
-  // @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Upload a profile picture' })
   @ApiParam({ name: 'userId', type: 'number' })
@@ -122,7 +123,7 @@ export class UserController {
   }
 
   @Get(':userId/profile-picture')
-  // @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Get a user's profile picture URL" })
   @ApiParam({ name: 'userId', type: 'number' })
@@ -136,7 +137,7 @@ export class UserController {
   }
 
   @Put(':userId/update-profile-picture')
-  // @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Update a user's profile picture" })
   @ApiParam({ name: 'userId', type: 'number' })
