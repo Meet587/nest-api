@@ -115,32 +115,27 @@ export class UserController {
       },
     }),
   )
-  async uploadProfilePicture(
-    @Param('userId') userId: number,
-    @UploadedFile() file: Express.Multer.File,
-  ) {
-    return this.userService.uploadProfilePicture(userId, file);
+  async uploadProfilePicture(@UploadedFile() file: Express.Multer.File) {
+    return this.userService.uploadProfilePicture(file);
   }
 
-  @Get(':userId/profile-picture')
+  @Get('profile-picture')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Get a user's profile picture URL" })
-  @ApiParam({ name: 'userId', type: 'number' })
   @ApiResponse({ status: 200, description: 'Return the profile picture URL.' })
   @ApiResponse({ status: 404, description: 'Profile picture not found.' })
-  async getProfilePicture(@Param('userId') userId: number) {
-    const filePath = await this.userService.getProfilePicture(userId);
+  async getProfilePicture() {
+    const filePath = await this.userService.getProfilePicture();
     return {
-      profilePictureUrl: `http://localhost:${process.env.PORT ?? 3003}/${filePath}`,
+      profilePictureUrl: `${process.env.WEB_HOST_URL}/${filePath}`,
     };
   }
 
-  @Put(':userId/update-profile-picture')
+  @Put('update-profile-picture')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Update a user's profile picture" })
-  @ApiParam({ name: 'userId', type: 'number' })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
     schema: {
@@ -161,7 +156,7 @@ export class UserController {
   @UseInterceptors(
     FileInterceptor('file', {
       storage: diskStorage({
-        destination: './uploads/profile-pictures',
+        destination: './public/profile_pic',
         filename: (req, file, callback) => {
           const uniqueSuffix = uuidv4() + extname(file.originalname);
           callback(null, uniqueSuffix);
@@ -182,17 +177,7 @@ export class UserController {
       },
     }),
   )
-  async updateProfilePicture(
-    @Param('userId') userId: number,
-    @UploadedFile() file: Express.Multer.File,
-    @Req() req: Request,
-  ) {
-    const user = req.user as JwtPayloadType;
-    if (user.uId !== userId) {
-      throw new BadRequestException(
-        'You can only update your own profile picture',
-      );
-    }
-    return this.userService.updateProfilePicture(userId, file);
+  async updateProfilePicture(@UploadedFile() file: Express.Multer.File) {
+    return await this.userService.updateProfilePicture(file);
   }
 }

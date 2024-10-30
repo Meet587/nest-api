@@ -6,6 +6,7 @@ import {
   BadRequestException,
   InternalServerErrorException,
   HttpException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -13,9 +14,11 @@ import { UserEntity } from './entities/user.entity';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
 import * as fs from 'fs';
-import { REQUEST } from '@nestjs/core';
-import path from 'path';
+import * as path from 'path';
 import { UploadProfileResDto } from './dto/upload-profile-res.dto';
+import { JwtPayloadType } from './dto/jwt-payload.type';
+import { REQUEST } from '@nestjs/core';
+import { Request } from 'express';
 
 @Injectable({ scope: Scope.REQUEST })
 export class UserService {
@@ -80,17 +83,40 @@ export class UserService {
   }
 
   async uploadProfilePicture(
-    userId: number,
     file: Express.Multer.File,
   ): Promise<UploadProfileResDto> {
     try {
-      const user = await this.getUserById(userId);
-      console.log(file);
+      const payload = this.request.user as JwtPayloadType;
+      const { uId } = payload;
+      if (!uId) {
+        throw new UnauthorizedException();
+      }
+
+      if (!file) {
+        throw new BadRequestException('provide profile pic.');
+      }
+      const user = await this.getUserById(uId);
+
+      if (!user) {
+        throw new NotFoundException('user not found.');
+      }
+      if (user.profilePicture) {
+        const oldFilePath = path.join(
+          __dirname,
+          '..',
+          '..',
+          'public',
+          user.profilePicture,
+        );
+        fs.unlinkSync(oldFilePath);
+      }
+
       const filePath = `profile_pic/${file.filename}`;
       user.profilePicture = filePath;
 
       const updatedUser = await this.usersRepository.save(user);
       const { password, ...rest } = updatedUser;
+      rest.profilePicture = `${process.env.WEB_HOST_URL}/${updatedUser.profilePicture}`;
       return { ...rest };
     } catch (error) {
       console.error('Error uploading profile picture:', error);
@@ -104,9 +130,15 @@ export class UserService {
     }
   }
 
-  async getProfilePicture(userId: number): Promise<string> {
+  async getProfilePicture(): Promise<string> {
     try {
-      const user = await this.getUserById(userId);
+      const payload = this.request.user as JwtPayloadType;
+      const { uId } = payload;
+      if (!uId) {
+        throw new UnauthorizedException();
+      }
+
+      const user = await this.getUserById(uId);
       if (!user.profilePicture) {
         throw new NotFoundException('Profile picture not found');
       }
@@ -121,24 +153,30 @@ export class UserService {
     }
   }
 
-  async updateProfilePicture(
-    userId: number,
-    file: Express.Multer.File,
-  ): Promise<UserEntity> {
+  async updateProfilePicture(file: Express.Multer.File): Promise<UserEntity> {
     try {
-      const user = await this.getUserById(userId);
+      const payload = this.request.user as JwtPayloadType;
+      const { uId } = payload;
+      if (!uId) {
+        throw new UnauthorizedException();
+      }
+
+      const user = await this.getUserById(uId);
       if (user.profilePicture) {
         const oldFilePath = path.join(
           __dirname,
           '..',
           '..',
+          'public',
           user.profilePicture,
         );
-        await fs.promises.unlink(oldFilePath);
+        fs.unlinkSync(oldFilePath);
       }
       const filePath = `profile_pic/${file.filename}`;
       user.profilePicture = filePath;
-      return await this.usersRepository.save(user);
+      const updatedUser = await this.usersRepository.save(user);
+      updatedUser.profilePicture = `${process.env.WEB_HOST_URL}/${updatedUser.profilePicture}`;
+      return updatedUser;
     } catch (error) {
       console.error('Error updating profile picture:', error);
       if (error instanceof HttpException) {
