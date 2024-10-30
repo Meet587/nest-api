@@ -54,21 +54,7 @@ export class UserController {
     return this.userService.create(createUserDto);
   }
 
-  @Get('')
-  @UseGuards(AuthGuard('jwt'))
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Find a user by email' })
-  @ApiBody({
-    description: 'find user by email',
-    type: GetUserByEmailDto,
-  })
-  @ApiResponse({ status: 200, description: 'Return the found user.' })
-  @ApiResponse({ status: 404, description: 'User not found.' })
-  findOne(@Body() body: GetUserByEmailDto) {
-    return this.userService.findOneByEmail(body.email);
-  }
-
-  @Post(':userId/upload-profile-picture')
+  @Post('upload-profile-picture')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Upload a profile picture' })
