@@ -123,7 +123,7 @@ export class AuthService {
       if (error instanceof HttpException) {
         throw error;
       } else {
-        throw new InternalServerErrorException('Invalid refresh token');
+        throw new UnauthorizedException('Invalid refresh token');
       }
     }
   }
