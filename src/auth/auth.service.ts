@@ -11,9 +11,11 @@ import * as bcrypt from 'bcryptjs';
 import { LoginDto } from './dto/login.dto';
 import { JwtPayloadType } from 'src/user/dto/jwt-payload.type';
 import { CreateUserDto } from 'src/user/dto/create-user.dto';
-import { UserEntity } from 'src/user/entities/user.entity';
+import { UserEntity } from 'src/entities/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { ConfigService } from '@nestjs/config';
+import { AuthConfig } from 'src/config/interface/auth.congif';
 
 @Injectable()
 export class AuthService {
@@ -22,6 +24,7 @@ export class AuthService {
     private jwtService: JwtService,
     @InjectRepository(UserEntity)
     private usersRepository: Repository<UserEntity>,
+    private configService: ConfigService,
   ) {}
 
   async validateUser(email: string, password: string): Promise<any> {
@@ -79,12 +82,20 @@ export class AuthService {
         user: {
           ...rest,
           access_token: await this.jwtService.signAsync(payload, {
-            expiresIn: process.env.JWT_ACCESS_TOKEN_EXP,
-            secret: process.env.JWL_SECRET,
+            secret: this.configService.getOrThrow<AuthConfig>(
+              'environment.authConfig',
+            ).jwtSecrete,
+            expiresIn: this.configService.getOrThrow<AuthConfig>(
+              'environment.authConfig',
+            ).tokenExp,
           }),
           refresh_token: await this.jwtService.signAsync(payload, {
-            expiresIn: process.env.JWT_REFRESH_TOKEN_EXP,
-            secret: process.env.JWL_SECRET,
+            secret: this.configService.getOrThrow<AuthConfig>(
+              'environment.authConfig',
+            ).jwtSecrete,
+            expiresIn: this.configService.getOrThrow<AuthConfig>(
+              'environment.authConfig',
+            ).refreshTokenExp,
           }),
         },
       };
@@ -103,19 +114,29 @@ export class AuthService {
   async refreshToken(token: string) {
     try {
       const decoded = (await this.jwtService.verifyAsync(token, {
-        secret: process.env.JWL_SECRET,
+        secret: this.configService.getOrThrow<AuthConfig>(
+          'environment.authConfig',
+        ).jwtSecrete,
       })) as JwtPayloadType;
 
       const payload = { email: decoded.email, id: decoded.uId };
 
       return {
         access_token: await this.jwtService.signAsync(payload, {
-          expiresIn: process.env.JWT_ACCESS_TOKEN_EXP,
-          secret: process.env.JWL_SECRET,
+          secret: this.configService.getOrThrow<AuthConfig>(
+            'environment.authConfig',
+          ).jwtSecrete,
+          expiresIn: this.configService.getOrThrow<AuthConfig>(
+            'environment.authConfig',
+          ).tokenExp,
         }),
         refresh_token: await this.jwtService.signAsync(payload, {
-          expiresIn: process.env.JWT_REFRESH_TOKEN_EXP,
-          secret: process.env.JWL_SECRET,
+          secret: this.configService.getOrThrow<AuthConfig>(
+            'environment.authConfig',
+          ).jwtSecrete,
+          expiresIn: this.configService.getOrThrow<AuthConfig>(
+            'environment.authConfig',
+          ).refreshTokenExp,
         }),
       };
     } catch (error) {

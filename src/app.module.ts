@@ -4,27 +4,23 @@ import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserModule } from './user/user.module';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ConfigModule } from '@nestjs/config';
+import environmentConfig from './config/environment.config';
+import { TypeOrmConfigService } from './db/typeorm-config.service';
+import { DataSource, DataSourceOptions } from 'typeorm';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
+      expandVariables: true,
       isGlobal: true,
-      envFilePath: '.env',
+      load: [environmentConfig],
     }),
     TypeOrmModule.forRootAsync({
-      imports: [ConfigModule],
-      inject: [ConfigService],
-      useFactory: (configService: ConfigService) => ({
-        type: 'mysql',
-        host: process.env.DB_HOST,
-        port: +process.env.DB_PORT,
-        username: process.env.DB_USERNAME,
-        password: process.env.DB_PASS,
-        database: process.env.DB_NAME,
-        autoLoadEntities: true,
-        synchronize: true,
-      }),
+      useClass: TypeOrmConfigService,
+      dataSourceFactory: async (options: DataSourceOptions) => {
+        return new DataSource(options).initialize();
+      },
     }),
     AuthModule,
     UserModule,
