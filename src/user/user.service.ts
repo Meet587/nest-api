@@ -19,6 +19,8 @@ import { UploadProfileResDto } from './dto/upload-profile-res.dto';
 import { JwtPayloadType } from './dto/jwt-payload.type';
 import { REQUEST } from '@nestjs/core';
 import { Request } from 'express';
+import { ConfigService } from '@nestjs/config';
+import { ServiceConfig } from 'src/config/interface/service.congif';
 
 @Injectable({ scope: Scope.REQUEST })
 export class UserService {
@@ -26,6 +28,7 @@ export class UserService {
     @Inject(REQUEST) private request: Request,
     @InjectRepository(UserEntity)
     private usersRepository: Repository<UserEntity>,
+    private readonly configService: ConfigService,
   ) {}
 
   async create(createUserDto: CreateUserDto): Promise<UserEntity> {
@@ -116,7 +119,12 @@ export class UserService {
 
       const updatedUser = await this.usersRepository.save(user);
       const { password, ...rest } = updatedUser;
-      rest.profilePicture = `${process.env.WEB_HOST_URL}/${updatedUser.profilePicture}`;
+      rest.profilePicture = path.join(
+        this.configService.getOrThrow<ServiceConfig>(
+          'environment.serviceConfig',
+        ).webHostUrl,
+        '/' + updatedUser.profilePicture,
+      );
       return { ...rest };
     } catch (error) {
       console.error('Error uploading profile picture:', error);
@@ -142,7 +150,13 @@ export class UserService {
       if (!user.profilePicture) {
         throw new NotFoundException('Profile picture not found');
       }
-      return user.profilePicture;
+      const link = path.join(
+        this.configService.getOrThrow<ServiceConfig>(
+          'environment.serviceConfig',
+        ).webHostUrl,
+        '/' + user.profilePicture,
+      );
+      return link;
     } catch (error) {
       if (error instanceof HttpException) {
         throw error;
@@ -175,7 +189,12 @@ export class UserService {
       const filePath = `profile_pic/${file.filename}`;
       user.profilePicture = filePath;
       const updatedUser = await this.usersRepository.save(user);
-      updatedUser.profilePicture = `${process.env.WEB_HOST_URL}/${updatedUser.profilePicture}`;
+      updatedUser.profilePicture = path.join(
+        this.configService.getOrThrow<ServiceConfig>(
+          'environment.serviceConfig',
+        ).webHostUrl,
+        '/' + updatedUser.profilePicture,
+      );
       return updatedUser;
     } catch (error) {
       console.error('Error updating profile picture:', error);

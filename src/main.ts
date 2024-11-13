@@ -27,6 +27,6 @@ async function bootstrap() {
 
   app.useStaticAssets(join(__dirname, '..', 'public'));
   app.enableCors();
-  await app.listen(process.env.PORT ?? 3003);
+  await app.listen(3003);
 }
 bootstrap();

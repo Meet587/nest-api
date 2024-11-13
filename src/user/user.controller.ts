@@ -26,12 +26,8 @@ import {
 import { diskStorage } from 'multer';
 import { extname } from 'path';
 import { v4 as uuidv4 } from 'uuid';
-import { Request } from 'express';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { GetUserByEmailDto } from './dto/get-user-by-email.dto';
-import { JwtPayloadType } from './dto/jwt-payload.type';
+import { JwtAuthGuard } from '../auth/strategy/jwt-auth.guard';
 import { UploadProfileResDto } from './dto/upload-profile-res.dto';
-import { AuthGuard } from '@nestjs/passport';
 
 const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2 MB
 const ALLOWED_FILE_TYPES = ['.jpg', '.jpeg', '.png'];
@@ -112,10 +108,7 @@ export class UserController {
   @ApiResponse({ status: 200, description: 'Return the profile picture URL.' })
   @ApiResponse({ status: 404, description: 'Profile picture not found.' })
   async getProfilePicture() {
-    const filePath = await this.userService.getProfilePicture();
-    return {
-      profilePictureUrl: `${process.env.WEB_HOST_URL}/${filePath}`,
-    };
+    return await this.userService.getProfilePicture();
   }
 
   @Put('update-profile-picture')
