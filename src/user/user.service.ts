@@ -111,7 +111,7 @@ export class UserService {
           'public',
           user.profilePicture,
         );
-        fs.unlinkSync(oldFilePath);
+        if (fs.existsSync(oldFilePath)) fs.unlinkSync(oldFilePath);
       }
 
       const filePath = `profile_pic/${file.filename}`;
@@ -167,44 +167,4 @@ export class UserService {
     }
   }
 
-  async updateProfilePicture(file: Express.Multer.File): Promise<UserEntity> {
-    try {
-      const payload = this.request.user as JwtPayloadType;
-      const { uId } = payload;
-      if (!uId) {
-        throw new UnauthorizedException();
-      }
-
-      const user = await this.getUserById(uId);
-      if (user.profilePicture) {
-        const oldFilePath = path.join(
-          __dirname,
-          '..',
-          '..',
-          'public',
-          user.profilePicture,
-        );
-        fs.unlinkSync(oldFilePath);
-      }
-      const filePath = `profile_pic/${file.filename}`;
-      user.profilePicture = filePath;
-      const updatedUser = await this.usersRepository.save(user);
-      updatedUser.profilePicture = path.join(
-        this.configService.getOrThrow<ServiceConfig>(
-          'environment.serviceConfig',
-        ).webHostUrl,
-        '/' + updatedUser.profilePicture,
-      );
-      return updatedUser;
-    } catch (error) {
-      console.error('Error updating profile picture:', error);
-      if (error instanceof HttpException) {
-        throw error;
-      } else {
-        throw new InternalServerErrorException(
-          'Failed to update profile picture',
-        );
-      }
-    }
-  }
 }

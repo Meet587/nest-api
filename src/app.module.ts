@@ -4,9 +4,10 @@ import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserModule } from './user/user.module';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { dbConfig } from './config/interface/db.config';
+import { ConfigModule } from '@nestjs/config';
 import environmentConfig from './config/environment.config';
+import { TypeOrmConfigService } from './db/typeorm-config.service';
+import { DataSource, DataSourceOptions } from 'typeorm';
 
 @Module({
   imports: [
@@ -16,21 +17,10 @@ import environmentConfig from './config/environment.config';
       load: [environmentConfig],
     }),
     TypeOrmModule.forRootAsync({
-      imports: [ConfigModule],
-      inject: [ConfigService],
-      useFactory: (configService: ConfigService) => ({
-        type: 'mysql',
-        host: configService.getOrThrow<dbConfig>('environment.dbConfig').host,
-        port: configService.getOrThrow<dbConfig>('environment.dbConfig').port,
-        username: configService.getOrThrow<dbConfig>('environment.dbConfig')
-          .username,
-        password: configService.getOrThrow<dbConfig>('environment.dbConfig')
-          .password,
-        database: configService.getOrThrow<dbConfig>('environment.dbConfig')
-          .dbName,
-        autoLoadEntities: true,
-        synchronize: true,
-      }),
+      useClass: TypeOrmConfigService,
+      dataSourceFactory: async (options: DataSourceOptions) => {
+        return new DataSource(options).initialize();
+      },
     }),
     AuthModule,
     UserModule,
