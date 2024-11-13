@@ -11,7 +11,7 @@ import * as bcrypt from 'bcryptjs';
 import { LoginDto } from './dto/login.dto';
 import { JwtPayloadType } from 'src/user/dto/jwt-payload.type';
 import { CreateUserDto } from 'src/user/dto/create-user.dto';
-import { UserEntity } from 'src/user/entities/user.entity';
+import { UserEntity } from 'src/entities/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
@@ -114,7 +114,9 @@ export class AuthService {
   async refreshToken(token: string) {
     try {
       const decoded = (await this.jwtService.verifyAsync(token, {
-        secret: process.env.JWL_SECRET,
+        secret: this.configService.getOrThrow<AuthConfig>(
+          'environment.authConfig',
+        ).jwtSecrete,
       })) as JwtPayloadType;
 
       const payload = { email: decoded.email, id: decoded.uId };
